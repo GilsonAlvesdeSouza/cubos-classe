@@ -53,6 +53,7 @@ const obterPerfil = async (req, res) => {
 
 const atualizarPerfil = async (req, res) => {
 	const { nome, email, senha, nome_loja } = req.body;
+	const usuarioId = req.usuario.id;
 
 	if (!nome && !email && !senha && !nome_loja) {
 		return res
@@ -61,52 +62,29 @@ const atualizarPerfil = async (req, res) => {
 	}
 
 	try {
-		// update usuarios set nome = $1, email = $2...
-		const body = {};
-		const params = [];
-		let n = 1;
-
-		if (nome) {
-			body.nome = nome;
-			params.push(`nome = $${n}`);
-			n++;
-		}
-
 		if (email) {
 			if (email !== req.usuario.email) {
-				const { rowCount: quantidadeUsuarios } = await conexao.query(
-					"select * from usuarios where email = $1",
-					[email]
-				);
+				const quantidadeUsuarios = await conexao
+					.knex("usuarios")
+					.where({ email })
+					.first();
 
-				if (quantidadeUsuarios > 0) {
+				if (quantidadeUsuarios) {
 					return res.status(400).json("O email já existe");
 				}
 			}
-
-			body.email = email;
-			params.push(`email = $${n}`);
-			n++;
 		}
 
-		if (senha) {
-			body.senha = await bcrypt.hash(senha, 10);
-			params.push(`senha = $${n}`);
-			n++;
-		}
+		const senhaCriptografada = await bcrypt.hash(senha, 10);
 
-		if (nome_loja) {
-			body.nome_loja = nome_loja;
-			params.push(`nome_loja = $${n}`);
-			n++;
-		}
+		const usuarioAtualizado = await conexao
+			.knex("usuarios")
+			.update({ nome, email, senha: senhaCriptografada, nome_loja })
+			.where({ id: usuarioId })
+			.returning("id")
+			.debug();
 
-		const valores = Object.values(body);
-		valores.push(req.usuario.id);
-		const query = `update usuarios set ${params.join(", ")} where id = $${n}`;
-		const usuarioAtualizado = await conexao.query(query, valores);
-
-		if (usuarioAtualizado.rowCount === 0) {
+		if (!usuarioAtualizado) {
 			return res.status(400).json("O usuario não foi atualizado");
 		}
 
