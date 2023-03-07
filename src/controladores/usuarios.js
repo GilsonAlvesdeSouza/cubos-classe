@@ -81,8 +81,7 @@ const atualizarPerfil = async (req, res) => {
 			.knex("usuarios")
 			.update({ nome, email, senha: senhaCriptografada, nome_loja })
 			.where({ id: usuarioId })
-			.returning("id")
-			.debug();
+			.returning("id");
 
 		if (!usuarioAtualizado) {
 			return res.status(400).json("O usuario não foi atualizado");
