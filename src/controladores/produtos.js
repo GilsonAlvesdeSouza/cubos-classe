@@ -29,14 +29,17 @@ const obterProduto = async (req, res) => {
 	const { id } = req.params;
 
 	try {
-		const query = `select * from produtos where usuario_id = $1 and id = $2`;
-		const { rows, rowCount } = await conexao.query(query, [usuario.id, id]);
+		const produto = await conexao
+			.knex("produtos")
+			.where({ usuario_id: usuario.id, id })
+			.first()
+			.debug();
 
-		if (rowCount === 0) {
+		if (!produto) {
 			return res.status(404).json("Produto não encontrado");
 		}
 
-		return res.status(200).json(rows[0]);
+		return res.status(200).json(produto);
 	} catch (error) {
 		return res.status(400).json(error.message);
 	}
