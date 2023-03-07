@@ -15,8 +15,7 @@ const listarProdutos = async (req, res) => {
 			.knex("produtos")
 			.whereILike("categoria", `${condicao}`)
 			.where({ usuario_id: usuario.id })
-			.select("*")
-			.debug();
+			.select("*");
 
 		return res.status(200).json(produtos);
 	} catch (error) {
@@ -101,64 +100,24 @@ const atualizarProduto = async (req, res) => {
 	}
 
 	try {
-		const query = `select * from produtos where usuario_id = $1 and id = $2`;
-		const { rowCount } = await conexao.query(query, [usuario.id, id]);
+		const produto = await conexao
+			.knex("produtos")
+			.where({ usuario_id: usuario.id, id })
+			.first();
 
-		if (rowCount === 0) {
+		if (!produto) {
 			return res.status(404).json("Produto não encontrado");
 		}
 
-		const body = {};
-		const params = [];
-		let n = 1;
+		const produtoAtualizado = await conexao
+			.knex("produtos")
+			.update({ nome, estoque, preco, categoria, descricao, imagem });
 
-		if (nome) {
-			body.nome = nome;
-			params.push(`nome = $${n}`);
-			n++;
-		}
-
-		if (estoque) {
-			body.estoque = estoque;
-			params.push(`estoque = $${n}`);
-			n++;
-		}
-
-		if (categoria) {
-			body.categoria = categoria;
-			params.push(`categoria = $${n}`);
-			n++;
-		}
-
-		if (descricao) {
-			body.descricao = descricao;
-			params.push(`descricao = $${n}`);
-			n++;
-		}
-
-		if (preco) {
-			body.preco = preco;
-			params.push(`preco = $${n}`);
-			n++;
-		}
-
-		if (imagem) {
-			body.imagem = imagem;
-			params.push(`imagem = $${n}`);
-			n++;
-		}
-
-		const valores = Object.values(body);
-		valores.push(id);
-		valores.push(usuario.id);
-		const queryAtualizacao = `update produtos set ${params.join(
-			", "
-		)} where id = $${n} and usuario_id = $${n + 1}`;
-		const produtoAtualizado = await conexao.query(queryAtualizacao, valores);
-
-		if (produtoAtualizado.rowCount === 0) {
+		if (!produtoAtualizado) {
 			return res.status(400).json("O produto não foi atualizado");
 		}
+
+		console.log(produtoAtualizado);
 
 		return res.status(200).json("produto foi atualizado com sucesso.");
 	} catch (error) {
