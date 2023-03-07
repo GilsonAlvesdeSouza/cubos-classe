@@ -32,8 +32,7 @@ const obterProduto = async (req, res) => {
 		const produto = await conexao
 			.knex("produtos")
 			.where({ usuario_id: usuario.id, id })
-			.first()
-			.debug();
+			.first();
 
 		if (!produto) {
 			return res.status(404).json("Produto não encontrado");
@@ -172,19 +171,18 @@ const excluirProduto = async (req, res) => {
 	const { id } = req.params;
 
 	try {
-		const query = `select * from produtos where usuario_id = $1 and id = $2`;
-		const { rowCount } = await conexao.query(query, [usuario.id, id]);
+		const produto = await conexao
+			.knex("produtos")
+			.where({ usuario_id: usuario.id, id })
+			.first();
 
-		if (rowCount === 0) {
+		if (!produto) {
 			return res.status(404).json("Produto não encontrado");
 		}
 
-		const produtoExcluido = await conexao.query(
-			"delete from produtos where id = $1",
-			[id]
-		);
+		const produtoExcluido = await conexao.knex("produtos").where({ id }).del();
 
-		if (produtoExcluido.rowCount === 0) {
+		if (!produtoExcluido) {
 			return res.status(400).json("O produto não foi excluido");
 		}
 
