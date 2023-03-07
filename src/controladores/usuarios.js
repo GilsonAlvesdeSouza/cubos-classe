@@ -35,13 +35,15 @@ const cadastrarUsuario = async (req, res) => {
 
 		const usuario = await conexao
 			.knex("usuarios")
-			.insert({ nome, email, senha: senhaCriptografada, nome_loja });
+			.returning(["nome", "email", "nome_loja"])
+			.insert({ nome, email, senha: senhaCriptografada, nome_loja })
+			.then((users) => users[0]);
 
 		if (!usuario) {
 			return res.status(400).json("O usuário não foi cadastrado.");
 		}
 
-		return res.status(200).json("O usuario foi cadastrado com sucesso!");
+		return res.status(200).json(usuario);
 	} catch (error) {
 		return res.status(400).json(error.message);
 	}
