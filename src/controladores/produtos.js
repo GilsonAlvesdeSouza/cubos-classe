@@ -5,19 +5,17 @@ const listarProdutos = async (req, res) => {
 	const { categoria } = req.query;
 
 	try {
-		let condicao = "";
-		const params = [];
+		let condicao = "%%";
 
 		if (categoria) {
-			condicao += "and categoria ilike $2";
-			params.push(`%${categoria}%`);
+			condicao = `%${categoria}%`;
 		}
 
-		const query = `select * from produtos where usuario_id = $1 ${condicao}`;
-		const { rows: produtos } = await conexao.query(query, [
-			usuario.id,
-			...params,
-		]);
+		const produtos = await conexao
+			.knex("produtos")
+			.whereILike("categoria", `${condicao}`)
+			.select("*")
+			.debug();
 
 		return res.status(200).json(produtos);
 	} catch (error) {
