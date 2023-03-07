@@ -14,6 +14,7 @@ const listarProdutos = async (req, res) => {
 		const produtos = await conexao
 			.knex("produtos")
 			.whereILike("categoria", `${condicao}`)
+			.where({ usuario_id: usuario.id })
 			.select("*")
 			.debug();
 
